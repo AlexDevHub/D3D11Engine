@@ -2,9 +2,8 @@
 // Created by xande on 6/9/2025.
 //
 
+#include "pch.hpp"
 #include "InputSystem.h"
-#include "GLFW/glfw3.h"
-
 namespace D3D11Engine {
 HRESULT InputSystem::Init() {
     return S_OK;

@@ -5,7 +5,7 @@
 #ifndef SYSTEM_H
 #define SYSTEM_H
 
-#include <Winerror.h>
+#include "pch.hpp"
 
 namespace D3D11Engine {
 class System {

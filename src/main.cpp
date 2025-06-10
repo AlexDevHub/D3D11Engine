@@ -1,5 +1,4 @@
-﻿#define WIN32_LEAN_AND_MEAN
-#include <windows.h>
+﻿#include "pch.hpp"
 #include "Application.h"
 #include "Error.h"
 

@@ -4,10 +4,9 @@
 
 #ifndef WINDOW_H
 #define WINDOW_H
-#include <string>
 
+#include <string>
 #include "System.h"
-#include <GLFW/glfw3.h>
 
 namespace D3D11Engine {
 class Window : public System{
