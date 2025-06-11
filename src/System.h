@@ -13,7 +13,7 @@ public:
     virtual ~System() = default;
 
     virtual HRESULT Init() = 0;
-    virtual HRESULT Update() = 0;
+    virtual void Update() = 0;
     virtual HRESULT Shutdown() = 0;
 };
 } // namespace D3D11Engine

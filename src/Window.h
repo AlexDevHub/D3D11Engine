@@ -14,10 +14,12 @@ public:
     Window(const int width, const int height, std::string&& window_name);
     ~Window() override;
     HRESULT Init() override;
-    HRESULT Update() override;
+    void Update() override;
     HRESULT Shutdown() override;
 
     bool ShouldWindowClose() const;
+
+    HWND getWindowHandle() const;
 
 private:
     int m_width = 0;

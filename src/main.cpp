@@ -7,7 +7,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR pScmdline,
 
     RETURN_IF_FAILED(app->Init())
 
-    RETURN_IF_FAILED(app->Update())
+    app->Update();
 
     RETURN_IF_FAILED(app->Shutdown())
     delete app;

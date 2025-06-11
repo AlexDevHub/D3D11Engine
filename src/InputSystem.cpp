@@ -10,11 +10,10 @@ HRESULT InputSystem::Init() {
 
 }
 
-HRESULT InputSystem::Update() {
+void InputSystem::Update() {
 
     glfwPollEvents();
 
-    return S_OK;
 }
 
 HRESULT InputSystem::Shutdown() {

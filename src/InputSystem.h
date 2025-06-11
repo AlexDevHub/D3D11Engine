@@ -11,7 +11,7 @@ namespace D3D11Engine {
 class InputSystem : System {
 public:
     HRESULT Init() override;
-    HRESULT Update() override;
+    void Update() override;
     HRESULT Shutdown() override;
 };
 

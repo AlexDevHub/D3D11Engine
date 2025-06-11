@@ -19,8 +19,7 @@ HRESULT D3D11Engine::Window::Init() {
     return S_OK;
 }
 
-HRESULT D3D11Engine::Window::Update() {
-    return S_OK;
+void D3D11Engine::Window::Update() {
 
 }
 
@@ -35,3 +34,6 @@ bool D3D11Engine::Window::ShouldWindowClose() const {
     return glfwWindowShouldClose(m_window_handle);
 }
 
+HWND D3D11Engine::Window::getWindowHandle() const {
+    return glfwGetWin32Window(m_window_handle);
+}
