@@ -19,7 +19,9 @@ public:
 
     bool ShouldWindowClose() const;
 
-    HWND getWindowHandle() const;
+    HWND getWindowHandleHWND() const;
+    GLFWwindow* getWindowHandle() const;
+    void SetWindowShouldClose(bool shouldClose);
 
 private:
     int m_width = 0;

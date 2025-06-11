@@ -5,6 +5,7 @@
 #ifndef APPLICATION_H
 #define APPLICATION_H
 
+#include "pch.hpp"
 #include "D3D11API.h"
 #include "InputSystem.h"
 #include "System.h"
@@ -24,6 +25,8 @@ public:
     HRESULT Shutdown() override;
 
     HRESULT Render();
+
+    friend class InputSystem;
 
 private:
     std::unique_ptr<Window> m_window;

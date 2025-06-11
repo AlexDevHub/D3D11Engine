@@ -18,10 +18,9 @@ ColorShader::~ColorShader() {
 
 HRESULT ColorShader::Initialize(ID3D11Device *device, HWND hwnd) {
 
-    std::wstring vsFilename (L"Assets/Shaders/color.vs.hlsl");
-    std::wstring psFilename (L"Assets/Shaders/color.ps.hlsl");
+    std::wstring shader_filename (L"Assets/Shaders/color.hlsl");
 
-    InitializeShader(device, hwnd, vsFilename, psFilename);
+    InitializeShader(device, hwnd, shader_filename);
 
     return S_OK;
 }
@@ -40,23 +39,23 @@ HRESULT ColorShader::Render(ID3D11DeviceContext* deviceContext, int indexCount, 
     return S_OK;
 }
 
-HRESULT ColorShader::InitializeShader(ID3D11Device *device, HWND hwnd, std::wstring& vs_filename, std::wstring& ps_filename) {
+HRESULT ColorShader::InitializeShader(ID3D11Device *device, HWND hwnd, std::wstring& shader_filename) {
     // Compile the vertex shader code.
     ComPtr<ID3D10Blob> errorMessage;
     ComPtr<ID3D10Blob> vertexShaderBuffer;
-    HRESULT result = D3DCompileFromFile(vs_filename.c_str(), nullptr, nullptr, "ColorVertexShader", "vs_5_0", D3D10_SHADER_ENABLE_STRICTNESS, 0,
+    HRESULT result = D3DCompileFromFile(shader_filename.c_str(), nullptr, nullptr, "vsMain", "vs_5_0", D3D10_SHADER_ENABLE_STRICTNESS, 0,
                     &vertexShaderBuffer, &errorMessage);
     if(FAILED(result))
     {
         // If the shader failed to compile it should have writen something to the error message.
         if(errorMessage)
         {
-            OutputShaderErrorMessage(errorMessage.Get(), hwnd, vs_filename);
+            OutputShaderErrorMessage(errorMessage.Get(), hwnd, shader_filename);
         }
         // If there was  nothing in the error message then it simply could not find the shader file itself.
         else
         {
-            MessageBoxW(hwnd, vs_filename.c_str(), L"Missing Shader File", MB_OK);
+            MessageBoxW(hwnd, shader_filename.c_str(), L"Missing Shader File", MB_OK);
         }
 
         return E_FAIL;
@@ -64,29 +63,29 @@ HRESULT ColorShader::InitializeShader(ID3D11Device *device, HWND hwnd, std::wstr
 
     // Compile the pixel shader code.
     ComPtr<ID3D10Blob> pixelShaderBuffer;
-    result = D3DCompileFromFile(ps_filename.c_str(), nullptr, nullptr, "ColorPixelShader", "ps_5_0", D3D10_SHADER_ENABLE_STRICTNESS, 0,
+    result = D3DCompileFromFile(shader_filename.c_str(), nullptr, nullptr, "psMain", "ps_5_0", D3D10_SHADER_ENABLE_STRICTNESS, 0,
                     &pixelShaderBuffer, &errorMessage);
     if(FAILED(result))
     {
         // If the shader failed to compile it should have writen something to the error message.
         if(errorMessage)
         {
-            OutputShaderErrorMessage(errorMessage.Get(), hwnd, ps_filename);
+            OutputShaderErrorMessage(errorMessage.Get(), hwnd, shader_filename);
         }
         // If there was nothing in the error message then it simply could not find the file itself.
         else
         {
-            MessageBoxW(hwnd, ps_filename.c_str(), L"Missing Shader File", MB_OK);
+            MessageBoxW(hwnd, shader_filename.c_str(), L"Missing Shader File", MB_OK);
         }
 
         return E_FAIL;
     }
 
     // Create the vertex shader from the buffer.
-    RETURN_FAIL_IF_FAILED(device->CreateVertexShader(vertexShaderBuffer->GetBufferPointer(), vertexShaderBuffer->GetBufferSize(), NULL, &m_vertexShader))
+    RETURN_FAIL_IF_FAILED(device->CreateVertexShader(vertexShaderBuffer->GetBufferPointer(), vertexShaderBuffer->GetBufferSize(), nullptr, m_vertexShader.GetAddressOf()))
 
     // Create the pixel shader from the buffer.
-    RETURN_FAIL_IF_FAILED(device->CreatePixelShader(pixelShaderBuffer->GetBufferPointer(), pixelShaderBuffer->GetBufferSize(), NULL, &m_pixelShader))
+    RETURN_FAIL_IF_FAILED(device->CreatePixelShader(pixelShaderBuffer->GetBufferPointer(), pixelShaderBuffer->GetBufferSize(), nullptr, m_pixelShader.GetAddressOf()))
 
     // Create the vertex input layout description.
     // This setup needs to match the VertexType stucture in the ModelClass and in the shader.
@@ -112,7 +111,7 @@ HRESULT ColorShader::InitializeShader(ID3D11Device *device, HWND hwnd, std::wstr
 
     // Create the vertex input layout.
     RETURN_FAIL_IF_FAILED(device->CreateInputLayout(polygonLayout, numElements, vertexShaderBuffer->GetBufferPointer(),
-                       vertexShaderBuffer->GetBufferSize(), &m_layout))
+                       vertexShaderBuffer->GetBufferSize(), m_layout.GetAddressOf()))
 
     // Setup the description of the dynamic matrix constant buffer that is in the vertex shader.
     D3D11_BUFFER_DESC matrixBufferDesc;
@@ -124,7 +123,7 @@ HRESULT ColorShader::InitializeShader(ID3D11Device *device, HWND hwnd, std::wstr
     matrixBufferDesc.StructureByteStride = 0;
 
     // Create the constant buffer pointer so we can access the vertex shader constant buffer from within this class.
-    RETURN_FAIL_IF_FAILED(device->CreateBuffer(&matrixBufferDesc, nullptr, &m_matrixBuffer))
+    RETURN_FAIL_IF_FAILED(device->CreateBuffer(&matrixBufferDesc, nullptr, m_matrixBuffer.GetAddressOf()))
 
     return S_OK;
 }
@@ -164,7 +163,7 @@ HRESULT ColorShader::SetShaderParameters(ID3D11DeviceContext *device_context, XM
     projection_matrix = XMMatrixTranspose(projection_matrix);
 
     // Lock the constant buffer so it can be written to.
-    D3D11_MAPPED_SUBRESOURCE mappedResource;
+    D3D11_MAPPED_SUBRESOURCE mappedResource = {};
     RETURN_FAIL_IF_FAILED(device_context->Map(m_matrixBuffer.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource))
 
     // Get a pointer to the data in the constant buffer.
@@ -182,7 +181,7 @@ HRESULT ColorShader::SetShaderParameters(ID3D11DeviceContext *device_context, XM
     unsigned int bufferNumber = 0;
 
     // Finanly set the constant buffer in the vertex shader with the updated values.
-    device_context->VSSetConstantBuffers(bufferNumber, 1, &m_matrixBuffer);
+    device_context->VSSetConstantBuffers(bufferNumber, 1, m_matrixBuffer.GetAddressOf());
 
     return S_OK;
 }
@@ -192,8 +191,8 @@ void ColorShader::RenderShader(ID3D11DeviceContext *device_context, int index_co
     device_context->IASetInputLayout(m_layout.Get());
 
     // Set the vertex and pixel shaders that will be used to render this triangle.
-    device_context->VSSetShader(m_vertexShader.Get(), NULL, 0);
-    device_context->PSSetShader(m_pixelShader.Get(), NULL, 0);
+    device_context->VSSetShader(m_vertexShader.Get(), nullptr, 0);
+    device_context->PSSetShader(m_pixelShader.Get(), nullptr, 0);
 
     // Render the triangle.
     device_context->DrawIndexed(index_count, 0, 0);

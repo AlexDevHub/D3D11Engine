@@ -3,6 +3,7 @@
 //
 
 #include "D3D11API.h"
+// #include <vector>
 
 #define IID_PPV_ARGS(ppType) __uuidof(**(ppType)), IID_PPV_ARGS_Helper(ppType)
 
@@ -24,34 +25,39 @@ HRESULT D3D11Engine::D3D11API::Init(int screen_width, int screen_height, bool vs
     ComPtr<IDXGIAdapter> adapter;
     RETURN_FAIL_IF_FAILED(factory->EnumAdapters(0, &adapter))
 
-    // Enumerate the primary adapter output (monitor).
-    ComPtr<IDXGIOutput> adapterOutput;
-    RETURN_FAIL_IF_FAILED(adapter->EnumOutputs(0, &adapterOutput))
-
-    // Get the number of modes that fit the DXGI_FORMAT_R8G8B8A8_UNORM display format for the adapter output (monitor).
-    unsigned int numModes;
-    RETURN_FAIL_IF_FAILED(adapterOutput->GetDisplayModeList(DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_ENUM_MODES_INTERLACED, &numModes, nullptr))
-
-    // Create a list to hold all the possible display modes for this monitor/video card combination.
-    DXGI_MODE_DESC* displayModeList = new DXGI_MODE_DESC[numModes];
-    RETURN_FALSE_IF_NULL(displayModeList)
-
-    // Now fill the display mode list structures.
-    RETURN_FAIL_IF_FAILED(adapterOutput->GetDisplayModeList(DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_ENUM_MODES_INTERLACED, &numModes, displayModeList))
-
-    // Now go through all the display modes and find the one that matches the screen width and height.
-    // When a match is found, store the numerator and denominator of the refresh rate for that monitor.
     unsigned int numerator = 0;
     unsigned int denominator = 1;
-    for(unsigned int i = 0; i < numModes; ++i)
-    {
-        if(displayModeList[i].Width == static_cast<unsigned int>(screen_width) &&
-           displayModeList[i].Height == static_cast<unsigned int>(screen_height))
+
+    // Enumerate the primary adapter output (monitor).
+    ComPtr<IDXGIOutput> adapterOutput;
+    HRESULT res = adapter->EnumOutputs(0, &adapterOutput);
+    if (SUCCEEDED(res)) {
+        // Get the number of modes that fit the DXGI_FORMAT_R8G8B8A8_UNORM display format for the adapter output (monitor).
+        unsigned int numModes;
+        RETURN_FAIL_IF_FAILED(adapterOutput->GetDisplayModeList(DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_ENUM_MODES_INTERLACED, &numModes, nullptr))
+
+        // Create a list to hold all the possible display modes for this monitor/video card combination.
+        DXGI_MODE_DESC* displayModeList = new DXGI_MODE_DESC[numModes];
+        RETURN_FALSE_IF_NULL(displayModeList)
+
+        // Now fill the display mode list structures.
+        RETURN_FAIL_IF_FAILED(adapterOutput->GetDisplayModeList(DXGI_FORMAT_R8G8B8A8_UNORM, DXGI_ENUM_MODES_INTERLACED, &numModes, displayModeList))
+
+        // Now go through all the display modes and find the one that matches the screen width and height.
+        // When a match is found, store the numerator and denominator of the refresh rate for that monitor.
+        for(unsigned int i = 0; i < numModes; ++i)
         {
-            numerator = displayModeList[i].RefreshRate.Numerator;
-            denominator = displayModeList[i].RefreshRate.Denominator;
+            if(displayModeList[i].Width == static_cast<unsigned int>(screen_width) &&
+               displayModeList[i].Height == static_cast<unsigned int>(screen_height))
+            {
+                numerator = displayModeList[i].RefreshRate.Numerator;
+                denominator = displayModeList[i].RefreshRate.Denominator;
+                break;
+            }
         }
+        delete [] displayModeList;
     }
+
 
     // Get the adapter (video card) description
     DXGI_ADAPTER_DESC adapterDesc;
@@ -64,7 +70,6 @@ HRESULT D3D11Engine::D3D11API::Init(int screen_width, int screen_height, bool vs
     m_videoCardDescription = std::move(std::wstring(adapterDesc.Description));
 
     // Release the display mode list.
-    delete [] displayModeList;
 
     // Initialize the swap chain description.
     DXGI_SWAP_CHAIN_DESC swapChainDesc;
@@ -110,10 +115,27 @@ HRESULT D3D11Engine::D3D11API::Init(int screen_width, int screen_height, bool vs
     // Set the feature level to DirectX 11.
     D3D_FEATURE_LEVEL featureLevel = D3D_FEATURE_LEVEL_11_0;
 
+    unsigned int flags = 0;
+
+#if defined(_DEBUG)
+    flags |= D3D11_CREATE_DEVICE_DEBUG;
+#endif
+
     // Create the swap chain, Direct3D device, and Direct3D device context.
     RETURN_FAIL_IF_FAILED(
-        D3D11CreateDeviceAndSwapChain(nullptr, D3D_DRIVER_TYPE_HARDWARE, NULL, 0, &featureLevel, 1,
-                           D3D11_SDK_VERSION, &swapChainDesc, &m_swapChain, &m_device, NULL, &m_deviceContext))
+        D3D11CreateDeviceAndSwapChain(
+            nullptr,
+            D3D_DRIVER_TYPE_HARDWARE,
+            nullptr,
+            flags,
+            &featureLevel,
+            1,
+            D3D11_SDK_VERSION,
+            &swapChainDesc,
+            &m_swapChain,
+            &m_device,
+            nullptr,
+            &m_deviceContext))
 
 
     // Get the pointer to the back buffer.
@@ -187,7 +209,7 @@ HRESULT D3D11Engine::D3D11API::Init(int screen_width, int screen_height, bool vs
     RETURN_FAIL_IF_FAILED(m_device->CreateDepthStencilView(m_depthStencilBuffer.Get(), &depthStencilViewDesc, &m_depthStencilView))
 
     // Bind the render target view and depth stencil buffer to the output render pipeline.
-    m_deviceContext->OMSetRenderTargets(1, &m_renderTargetView, m_depthStencilView.Get());
+    m_deviceContext->OMSetRenderTargets(1, m_renderTargetView.GetAddressOf(), m_depthStencilView.Get());
 
     // Setup the raster description which will determine how and what polygons will be drawn.
     D3D11_RASTERIZER_DESC rasterDesc;
@@ -305,7 +327,7 @@ void D3D11Engine::D3D11API::GetVideoCardInfo(std::wstring& card_name, int& memor
 
 void D3D11Engine::D3D11API::SetBackBufferRenderTarget() {
     // Bind the render target view and depth stencil buffer to the output render pipeline.
-    m_deviceContext->OMSetRenderTargets(1, &m_renderTargetView, m_depthStencilView.Get());
+    m_deviceContext->OMSetRenderTargets(1, m_renderTargetView.GetAddressOf(), m_depthStencilView.Get());
 }
 
 

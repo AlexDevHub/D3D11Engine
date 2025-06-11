@@ -33,7 +33,7 @@ public:
     HRESULT Render(ID3D11DeviceContext*, int, XMMATRIX, XMMATRIX, XMMATRIX);
 
 private:
-    HRESULT InitializeShader(ID3D11Device *device, HWND hwnd, std::wstring& vs_filename, std::wstring& ps_filename);
+    HRESULT InitializeShader(ID3D11Device *device, HWND hwnd, std::wstring& shader_filename);
     void ShutdownShader();
     void OutputShaderErrorMessage(ID3D10Blob* error_message, HWND hwnd, std::wstring &shader_filename);
 

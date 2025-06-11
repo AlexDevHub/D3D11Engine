@@ -15,6 +15,8 @@
 
 #include "Error.h"
 
+#include <memory>
+
 using namespace Microsoft::WRL;
 
 #endif //PCH_H

@@ -34,6 +34,14 @@ bool D3D11Engine::Window::ShouldWindowClose() const {
     return glfwWindowShouldClose(m_window_handle);
 }
 
-HWND D3D11Engine::Window::getWindowHandle() const {
+HWND D3D11Engine::Window::getWindowHandleHWND() const {
     return glfwGetWin32Window(m_window_handle);
+}
+
+GLFWwindow* D3D11Engine::Window::getWindowHandle() const {
+    return m_window_handle;
+}
+
+void D3D11Engine::Window::SetWindowShouldClose(bool shouldClose) {
+    glfwSetWindowShouldClose(m_window_handle, shouldClose);
 }

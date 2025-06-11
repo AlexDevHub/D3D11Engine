@@ -69,7 +69,7 @@ HRESULT Model::InitializeBuffers(ID3D11Device *device) {
     vertexData.SysMemSlicePitch = 0;
 
     // Now create the vertex buffer.
-    RETURN_FAIL_IF_FAILED(device->CreateBuffer(&vertexBufferDesc, &vertexData, &m_vertexBuffer))
+    RETURN_FAIL_IF_FAILED(device->CreateBuffer(&vertexBufferDesc, &vertexData, m_vertexBuffer.GetAddressOf()))
 
     // Set up the description of the static index buffer.
     D3D11_BUFFER_DESC indexBufferDesc;
@@ -87,7 +87,7 @@ HRESULT Model::InitializeBuffers(ID3D11Device *device) {
     indexData.SysMemSlicePitch = 0;
 
     // Create the index buffer.
-    RETURN_FAIL_IF_FAILED(device->CreateBuffer(&indexBufferDesc, &indexData, &m_indexBuffer))
+    RETURN_FAIL_IF_FAILED(device->CreateBuffer(&indexBufferDesc, &indexData, m_indexBuffer.GetAddressOf()))
 
     // Release the arrays now that the vertex and index buffers have been created and loaded.
     delete [] vertices;
@@ -102,7 +102,7 @@ void Model::RenderBuffers(ID3D11DeviceContext *device_context) {
     unsigned int offset = 0;
 
     // Set the vertex buffer to active in the input assembler so it can be rendered.
-    device_context->IASetVertexBuffers(0, 1, &m_vertexBuffer, &stride, &offset);
+    device_context->IASetVertexBuffers(0, 1, m_vertexBuffer.GetAddressOf(), &stride, &offset);
 
     // Set the index buffer to active in the input assembler so it can be rendered.
     device_context->IASetIndexBuffer(m_indexBuffer.Get(), DXGI_FORMAT_R32_UINT, 0);

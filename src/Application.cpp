@@ -5,7 +5,7 @@
 #include "Application.h"
 
 constexpr bool FULLSCREEN = false;
-constexpr bool VSYNC_ENABLED = false;
+constexpr bool VSYNC_ENABLED = true;
 constexpr float SCREEN_DEPTH = 1000.0f;
 constexpr float SCREEN_NEAR = 0.3f;
 
@@ -14,23 +14,24 @@ HRESULT D3D11Engine::Application::Init() {
         return E_FAIL;
     }
 
-
     m_window = std::make_unique<Window>(640, 480, "D3D11Engine");
     RETURN_FAIL_IF_FAILED(m_window->Init())
-    HWND window_hwnd = m_window->getWindowHandle();
-
-    m_input = std::make_unique<InputSystem>();
+    HWND window_hwnd = m_window->getWindowHandleHWND();
 
     m_d3d11api = std::make_unique<D3D11API>();
     RETURN_FAIL_IF_FAILED(m_d3d11api->Init(640, 480, VSYNC_ENABLED, window_hwnd, false, SCREEN_DEPTH, SCREEN_NEAR))
 
     m_camera = std::make_unique<Camera>();
+    m_camera->SetPosition(0.0f, 0.0f, -5.0f);
 
     m_model = std::make_unique<Model>();
     RETURN_FAIL_IF_FAILED(m_model->Initialize(m_d3d11api->GetDevice()))
 
     m_color_shader = std::make_unique<ColorShader>();
     RETURN_FAIL_IF_FAILED(m_color_shader->Initialize(m_d3d11api->GetDevice(), window_hwnd))
+
+    m_input = std::make_unique<InputSystem>();
+    m_input->Init(m_window->getWindowHandle(), m_camera.get());
 
     return S_OK;
 }
@@ -57,7 +58,7 @@ HRESULT D3D11Engine::Application::Render() {
     m_camera->Render();
 
     // Get the world, view, and projection matrices from the camera and d3d objects.
-    XMMATRIX worldMatrix, viewMatrix, projectionMatrix;
+    XMMATRIX worldMatrix{}, viewMatrix{}, projectionMatrix{};
     m_d3d11api->GetWorldMatrix(worldMatrix);
     m_camera->GetViewMatrix(viewMatrix);
     m_d3d11api->GetProjectionMatrix(projectionMatrix);
