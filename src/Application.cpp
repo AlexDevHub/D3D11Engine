@@ -14,25 +14,62 @@ HRESULT D3D11Engine::Application::Init() {
         return E_FAIL;
     }
 
-    m_window_handle = new Window(640, 480, "D3D11Engine");
-    RETURN_FAIL_IF_FAILED(m_window_handle->Init())
 
-    m_input_handle = new InputSystem();
+    m_window = std::make_unique<Window>(640, 480, "D3D11Engine");
+    RETURN_FAIL_IF_FAILED(m_window->Init())
+    HWND window_hwnd = m_window->getWindowHandle();
 
-    m_d3d11api = new D3D11API();
-    RETURN_FAIL_IF_FAILED(m_d3d11api->Init(640, 480, VSYNC_ENABLED, m_window_handle->getWindowHandle(), false, SCREEN_DEPTH, SCREEN_NEAR))
+    m_input = std::make_unique<InputSystem>();
+
+    m_d3d11api = std::make_unique<D3D11API>();
+    RETURN_FAIL_IF_FAILED(m_d3d11api->Init(640, 480, VSYNC_ENABLED, window_hwnd, false, SCREEN_DEPTH, SCREEN_NEAR))
+
+    m_camera = std::make_unique<Camera>();
+
+    m_model = std::make_unique<Model>();
+    RETURN_FAIL_IF_FAILED(m_model->Initialize(m_d3d11api->GetDevice()))
+
+    m_color_shader = std::make_unique<ColorShader>();
+    RETURN_FAIL_IF_FAILED(m_color_shader->Initialize(m_d3d11api->GetDevice(), window_hwnd))
 
     return S_OK;
 }
 
 void D3D11Engine::Application::Update() {
-    while (!m_window_handle->ShouldWindowClose()) {
-        m_input_handle->Update();
+    while (!m_window->ShouldWindowClose()) {
+        m_input->Update();
+
+        Render();
     }
 }
 
 HRESULT D3D11Engine::Application::Shutdown() {
     glfwTerminate();
+
+    return S_OK;
+}
+
+HRESULT D3D11Engine::Application::Render() {
+    // Clear the buffers to begin the scene.
+    m_d3d11api->BeginScene(0.0f, 0.0f, 0.0f, 1.0f);
+
+    // Generate the view matrix based on the camera's position.
+    m_camera->Render();
+
+    // Get the world, view, and projection matrices from the camera and d3d objects.
+    XMMATRIX worldMatrix, viewMatrix, projectionMatrix;
+    m_d3d11api->GetWorldMatrix(worldMatrix);
+    m_camera->GetViewMatrix(viewMatrix);
+    m_d3d11api->GetProjectionMatrix(projectionMatrix);
+
+    // Put the model vertex and index buffers on the graphics pipeline to prepare them for drawing.
+    m_model->Render(m_d3d11api->GetDeviceContext());
+
+    // Render the model using the color shader.
+    RETURN_FAIL_IF_FAILED(m_color_shader->Render(m_d3d11api->GetDeviceContext(), m_model->GetIndexCount(), worldMatrix, viewMatrix, projectionMatrix))
+
+    // Present the rendered scene to the screen.
+    m_d3d11api->EndScene();
 
     return S_OK;
 }

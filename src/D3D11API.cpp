@@ -273,15 +273,15 @@ void D3D11Engine::D3D11API::EndScene()
     }
 }
 
-ComPtr<ID3D11Device> D3D11Engine::D3D11API::GetDevice()
+ID3D11Device* D3D11Engine::D3D11API::GetDevice()
 {
-    return m_device;
+    return m_device.Get();
 }
 
 
-ComPtr<ID3D11DeviceContext> D3D11Engine::D3D11API::GetDeviceContext()
+ID3D11DeviceContext* D3D11Engine::D3D11API::GetDeviceContext()
 {
-    return m_deviceContext;
+    return m_deviceContext.Get();
 }
 
 void D3D11Engine::D3D11API::GetProjectionMatrix(XMMATRIX& projectionMatrix) const {

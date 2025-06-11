@@ -31,7 +31,6 @@ public:
     void BeginScene(float red, float green, float blue, float alpha);
     void EndScene();
 
-    ComPtr<ID3D11DeviceContext> GetDeviceContext();
 
     void GetProjectionMatrix(XMMATRIX &projectionMatrix) const;
     void GetWorldMatrix(XMMATRIX &worldMatrix) const;
@@ -41,7 +40,8 @@ public:
     void SetBackBufferRenderTarget();
     void ResetViewport();
 
-    ComPtr<ID3D11Device> GetDevice();
+    ID3D11DeviceContext* GetDeviceContext();
+    ID3D11Device* GetDevice();
 
 private:
     bool m_vsync_enabled = false;
