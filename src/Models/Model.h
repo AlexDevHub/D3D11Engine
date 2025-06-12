@@ -5,8 +5,10 @@
 #ifndef MODEL_H
 #define MODEL_H
 
-#include "pch.hpp"
-#include "Texture.h"
+#include <vector>
+
+#include "../pch.hpp"
+#include "../Texture.h"
 
 using namespace DirectX;
 
@@ -19,6 +21,13 @@ private:
         XMFLOAT4 color;
         XMFLOAT2 texture;
         XMFLOAT3 normal;
+    };
+
+    struct ModelType
+    {
+        float x, y, z;
+        float tu, tv;
+        float nx, ny, nz;
     };
 
 public:
@@ -35,6 +44,7 @@ public:
     ID3D11ShaderResourceView* GetTexture() const;
 
 private:
+    HRESULT LoadModel();
     HRESULT InitializeBuffers(ID3D11Device *device);
     void ShutdownBuffers();
     void RenderBuffers(ID3D11DeviceContext *device_context);
@@ -47,6 +57,8 @@ private:
     ComPtr<ID3D11Buffer> m_indexBuffer;
     int m_vertexCount, m_indexCount;
     std::unique_ptr<Texture> m_texture;
+    std::vector<ModelType> m_model;
+
 };
 
 } // D3D11Engine

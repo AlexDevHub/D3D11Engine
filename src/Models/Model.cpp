@@ -3,9 +3,13 @@
 //
 
 #include "Model.h"
+#include "CubeData.h"
 
 namespace D3D11Engine {
 HRESULT Model::Initialize(ID3D11Device *device, ID3D11DeviceContext *device_context, const std::string& texture_filename) {
+    // Load in the model data.
+    RETURN_FAIL_IF_FAILED(LoadModel())
+
     // Initialize the vertex and index buffers.
     RETURN_FAIL_IF_FAILED(InitializeBuffers(device))
 
@@ -29,13 +33,35 @@ ID3D11ShaderResourceView * Model::GetTexture() const {
     return m_texture->GetTexture();
 }
 
+HRESULT Model::LoadModel() {
+    // Read in the vertex count.
+    m_vertexCount = CubeData::vertex_size;
+
+    // Set the number of indices to be the same as the vertex count.
+    m_indexCount = m_vertexCount;
+
+    // Create the model using the vertex count that was read in.
+    m_model.resize(m_vertexCount);
+    
+    for (unsigned int i = 0; i < m_vertexCount; ++i) {
+        // Position data
+        m_model[i].x = CubeData::vertex_data[i * CubeData::stride];
+        m_model[i].y = CubeData::vertex_data[i * CubeData::stride + 1];
+        m_model[i].z = CubeData::vertex_data[i * CubeData::stride + 2];
+
+        // UV data
+        m_model[i].tu = CubeData::vertex_data[i * CubeData::stride + 3];
+        m_model[i].tv = CubeData::vertex_data[i * CubeData::stride + 4];
+
+        // Normal data
+        m_model[i].nx = CubeData::vertex_data[i * CubeData::stride + 5];
+        m_model[i].ny = CubeData::vertex_data[i * CubeData::stride + 6];
+        m_model[i].nz = CubeData::vertex_data[i * CubeData::stride + 7];
+    }
+    return S_OK;
+}
+
 HRESULT Model::InitializeBuffers(ID3D11Device *device) {
-    // Set the number of vertices in the vertex array.
-    m_vertexCount = 3;
-
-    // Set the number of indices in the index array.
-    m_indexCount = 3;
-
     // Create the vertex array.
     VertexType* vertices = new VertexType[m_vertexCount];
     RETURN_FAIL_IF_NULL(vertices)
@@ -44,26 +70,15 @@ HRESULT Model::InitializeBuffers(ID3D11Device *device) {
     unsigned long* indices = new unsigned long[m_indexCount];
     RETURN_FAIL_IF_NULL(indices)
 
-    // Load the vertex array with data.
-    vertices[0].position = XMFLOAT3(-1.0f, -1.0f, 0.0f);  // Bottom left.
-    vertices[0].color = XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f);
-    vertices[0].texture = XMFLOAT2(0.0f, 1.0f);
-    vertices[0].normal = XMFLOAT3(0.0f, 0.0f, -1.0f);
+    // Load the vertex array and index array with data.
+    for(unsigned int i = 0; i < m_vertexCount; ++i)
+    {
+        vertices[i].position = XMFLOAT3(m_model[i].x, m_model[i].y, m_model[i].z);
+        vertices[i].texture = XMFLOAT2(m_model[i].tu, m_model[i].tv);
+        vertices[i].normal = XMFLOAT3(m_model[i].nx, m_model[i].ny, m_model[i].nz);
 
-    vertices[1].position = XMFLOAT3(0.0f, 1.0f, 0.0f);  // Top middle.
-    vertices[1].color = XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f);
-    vertices[1].texture = XMFLOAT2(0.5f, 0.0f);
-    vertices[1].normal = XMFLOAT3(0.0f, 0.0f, -1.0f);
-
-    vertices[2].position = XMFLOAT3(1.0f, -1.0f, 0.0f);  // Bottom right.
-    vertices[2].color = XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f);
-    vertices[2].texture = XMFLOAT2(1.0f, 1.0f);
-    vertices[2].normal = XMFLOAT3(0.0f, 0.0f, -1.0f);
-
-    // Load the index array with data.
-    indices[0] = 0;  // Bottom left.
-    indices[1] = 1;  // Top middle.
-    indices[2] = 2;  // Bottom right.
+        indices[i] = i;
+    }
 
     // Set up the description of the static vertex buffer.
     D3D11_BUFFER_DESC vertexBufferDesc;
@@ -81,7 +96,7 @@ HRESULT Model::InitializeBuffers(ID3D11Device *device) {
     vertexData.SysMemSlicePitch = 0;
 
     // Now create the vertex buffer.
-    RETURN_FAIL_IF_FAILED(device->CreateBuffer(&vertexBufferDesc, &vertexData, m_vertexBuffer.GetAddressOf()))
+    RETURN_FAIL_IF_FAILED(device->CreateBuffer(&vertexBufferDesc, &vertexData, &m_vertexBuffer))
 
     // Set up the description of the static index buffer.
     D3D11_BUFFER_DESC indexBufferDesc;
@@ -99,7 +114,7 @@ HRESULT Model::InitializeBuffers(ID3D11Device *device) {
     indexData.SysMemSlicePitch = 0;
 
     // Create the index buffer.
-    RETURN_FAIL_IF_FAILED(device->CreateBuffer(&indexBufferDesc, &indexData, m_indexBuffer.GetAddressOf()))
+    RETURN_FAIL_IF_FAILED(device->CreateBuffer(&indexBufferDesc, &indexData, &m_indexBuffer))
 
     // Release the arrays now that the vertex and index buffers have been created and loaded.
     delete [] vertices;

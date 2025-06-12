@@ -11,7 +11,7 @@
 #include "System.h"
 #include "Window.h"
 #include "Camera.h"
-#include "Model.h"
+#include "Models/Model.h"
 #include "Shaders/ColorShader.h"
 #include "Shaders/TextureShader.h"
 #include "Shaders/LightShader.h"
