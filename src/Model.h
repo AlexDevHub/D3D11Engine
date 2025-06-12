@@ -6,8 +6,7 @@
 #define MODEL_H
 
 #include "pch.hpp"
-#include <d3d11.h>
-#include <directxmath.h>
+#include "Texture.h"
 
 using namespace DirectX;
 
@@ -18,6 +17,7 @@ private:
     {
         XMFLOAT3 position;
         XMFLOAT4 color;
+        XMFLOAT2 texture;
     };
 
 public:
@@ -25,21 +25,27 @@ public:
     Model(const Model&) = default;
     ~Model() = default;
 
-    HRESULT Initialize(ID3D11Device *device);
+    HRESULT Initialize(ID3D11Device *device, ID3D11DeviceContext *device_context, const std::string& texture_filename);
     void Shutdown();
     void Render(ID3D11DeviceContext* device_context);
 
     int GetIndexCount() const;
+
+    ID3D11ShaderResourceView* GetTexture() const;
 
 private:
     HRESULT InitializeBuffers(ID3D11Device *device);
     void ShutdownBuffers();
     void RenderBuffers(ID3D11DeviceContext *device_context);
 
+    HRESULT LoadTexture(ID3D11Device* device, ID3D11DeviceContext* device_context, const std::string& filename);
+    void ReleaseTexture();
+
 private:
     ComPtr<ID3D11Buffer> m_vertexBuffer;
     ComPtr<ID3D11Buffer> m_indexBuffer;
     int m_vertexCount, m_indexCount;
+    std::unique_ptr<Texture> m_texture;
 };
 
 } // D3D11Engine

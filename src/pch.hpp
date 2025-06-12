@@ -15,8 +15,14 @@
 
 #include "Error.h"
 
+#include <string>
 #include <memory>
 
+#include <directxmath.h>
+#include <d3d11.h>
+#include <d3dcompiler.h>
+
 using namespace Microsoft::WRL;
+using namespace DirectX;
 
 #endif //PCH_H

@@ -9,6 +9,7 @@ endmacro()
 
 gather_sources()
 add_subdirectory(libs)
+include_directories(libs/STB)
 
 add_executable(${PROJECT_NAME}
         ${SRC}

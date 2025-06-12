@@ -8,13 +8,13 @@ cbuffer MatrixBuffer
 struct VertexInputType
 {
     float4 position : POSITION;
-    float4 color : COLOR;
+    float2 tex : TEXCOORD0;
 };
 
 struct PixelInputType
 {
     float4 position : SV_POSITION;
-    float4 color : COLOR;
+    float2 tex : TEXCOORD0;
 };
 
 PixelInputType vsMain(VertexInputType input)
@@ -29,13 +29,21 @@ PixelInputType vsMain(VertexInputType input)
     output.position = mul(output.position, viewMatrix);
     output.position = mul(output.position, projectionMatrix);
 
-    // Store the input color for the pixel shader to use.
-    output.color = input.color;
+    // Store the texture coordinates for the pixel shader.
+    output.tex = input.tex;
 
     return output;
 }
 
+Texture2D shaderTexture : register(t0);
+SamplerState SampleType : register(s0);
+
 float4 psMain(PixelInputType input) : SV_TARGET
 {
-    return input.color;
+    float4 textureColor;
+
+    // Sample the pixel color from the texture using the sampler at this texture coordinate location.
+    textureColor = shaderTexture.Sample(SampleType, input.tex);
+
+    return textureColor;
 }

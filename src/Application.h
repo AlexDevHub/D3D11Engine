@@ -13,6 +13,7 @@
 #include "Camera.h"
 #include "Model.h"
 #include "ColorShader.h"
+#include "TextureShader.h"
 
 namespace D3D11Engine {
 class Application : public  System{
@@ -35,6 +36,7 @@ private:
     std::unique_ptr<Camera> m_camera;
     std::unique_ptr<Model> m_model;
     std::unique_ptr<ColorShader> m_color_shader;
+    std::unique_ptr<TextureShader> m_texture_shader;
 };
 } // namespace D3D11Engine
 

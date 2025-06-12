@@ -10,41 +10,24 @@
 #include <d3dcompiler.h>
 #include <directxmath.h>
 #include <fstream>
+#include "Shader.h"
 
 using namespace DirectX;
 
 namespace D3D11Engine {
-class ColorShader {
-private:
-    struct MatrixBufferType
-    {
-        XMMATRIX world;
-        XMMATRIX view;
-        XMMATRIX projection;
-    };
-
+class ColorShader : Shader{
 public:
-    ColorShader();
-    ColorShader(const ColorShader&);
-    ~ColorShader();
+    ColorShader() = default;
+    ColorShader(const ColorShader&) = default;
+    ~ColorShader() = default;
 
-    HRESULT Initialize(ID3D11Device*, HWND);
-    void Shutdown();
+    HRESULT Initialize(ID3D11Device* device, HWND hwnd);
     HRESULT Render(ID3D11DeviceContext*, int, XMMATRIX, XMMATRIX, XMMATRIX);
 
 private:
-    HRESULT InitializeShader(ID3D11Device *device, HWND hwnd, std::wstring& shader_filename);
-    void ShutdownShader();
-    void OutputShaderErrorMessage(ID3D10Blob* error_message, HWND hwnd, std::wstring &shader_filename);
+    HRESULT SetShaderParameters(ID3D11DeviceContext *device_context, XMMATRIX world_matrix, XMMATRIX view_matrix, XMMATRIX projection_matrix) override;
+    void RenderShader(ID3D11DeviceContext *device_context, int index_count) override;
 
-    HRESULT SetShaderParameters(ID3D11DeviceContext *device_context, XMMATRIX world_matrix, XMMATRIX view_matrix, XMMATRIX projection_matrix);
-    void RenderShader(ID3D11DeviceContext *device_context, int index_count);
-
-private:
-    ComPtr<ID3D11VertexShader> m_vertexShader;
-    ComPtr<ID3D11PixelShader> m_pixelShader;
-    ComPtr<ID3D11InputLayout> m_layout;
-    ComPtr<ID3D11Buffer> m_matrixBuffer;
 };
 } // D3D11Engine
 

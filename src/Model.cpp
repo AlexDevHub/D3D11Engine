@@ -5,9 +5,11 @@
 #include "Model.h"
 
 namespace D3D11Engine {
-HRESULT Model::Initialize(ID3D11Device *device) {
+HRESULT Model::Initialize(ID3D11Device *device, ID3D11DeviceContext *device_context, const std::string& texture_filename) {
     // Initialize the vertex and index buffers.
     RETURN_FAIL_IF_FAILED(InitializeBuffers(device))
+
+    RETURN_FAIL_IF_FAILED(LoadTexture(device, device_context, texture_filename))
 
     return S_OK;
 }
@@ -21,6 +23,10 @@ void Model::Render(ID3D11DeviceContext *device_context) {
 
 int Model::GetIndexCount() const {
     return m_indexCount;
+}
+
+ID3D11ShaderResourceView * Model::GetTexture() const {
+    return m_texture->GetTexture();
 }
 
 HRESULT Model::InitializeBuffers(ID3D11Device *device) {
@@ -41,12 +47,15 @@ HRESULT Model::InitializeBuffers(ID3D11Device *device) {
     // Load the vertex array with data.
     vertices[0].position = XMFLOAT3(-1.0f, -1.0f, 0.0f);  // Bottom left.
     vertices[0].color = XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f);
+    vertices[0].texture = XMFLOAT2(0.0f, 1.0f);
 
     vertices[1].position = XMFLOAT3(0.0f, 1.0f, 0.0f);  // Top middle.
     vertices[1].color = XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f);
+    vertices[1].texture = XMFLOAT2(0.5f, 0.0f);
 
     vertices[2].position = XMFLOAT3(1.0f, -1.0f, 0.0f);  // Bottom right.
     vertices[2].color = XMFLOAT4(0.0f, 1.0f, 0.0f, 1.0f);
+    vertices[2].texture = XMFLOAT2(1.0f, 1.0f);
 
     // Load the index array with data.
     indices[0] = 0;  // Bottom left.
@@ -109,5 +118,12 @@ void Model::RenderBuffers(ID3D11DeviceContext *device_context) {
 
     // Set the type of primitive that should be rendered from this vertex buffer, in this case triangles.
     device_context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+}
+
+HRESULT Model::LoadTexture(ID3D11Device *device, ID3D11DeviceContext *device_context, const std::string &filename) {
+    m_texture = std::make_unique<Texture>();
+    RETURN_FAIL_IF_FAILED(m_texture->Initialize(device, device_context, filename))
+
+    return S_OK;
 }
 } // D3D11Engine

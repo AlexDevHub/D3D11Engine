@@ -24,11 +24,21 @@ HRESULT D3D11Engine::Application::Init() {
     m_camera = std::make_unique<Camera>();
     m_camera->SetPosition(0.0f, 0.0f, -5.0f);
 
+    std::string texture_filename("Assets/Textures/stone01.tga");
     m_model = std::make_unique<Model>();
-    RETURN_FAIL_IF_FAILED(m_model->Initialize(m_d3d11api->GetDevice()))
+    RETURN_FAIL_IF_FAILED(m_model->Initialize(m_d3d11api->GetDevice(),m_d3d11api->GetDeviceContext(), texture_filename))
 
     m_color_shader = std::make_unique<ColorShader>();
     RETURN_FAIL_IF_FAILED(m_color_shader->Initialize(m_d3d11api->GetDevice(), window_hwnd))
+
+    // Create and initialize the texture shader object.
+    m_texture_shader = std::make_unique<TextureShader>();
+
+    if(FAILED(m_texture_shader->Initialize(m_d3d11api->GetDevice(), window_hwnd)))
+    {
+        MessageBoxW(window_hwnd, L"Could not initialize the texture shader object.", L"Error", MB_OK);
+        return false;
+    }
 
     m_input = std::make_unique<InputSystem>();
     m_input->Init(m_window->getWindowHandle(), m_camera.get());
@@ -66,8 +76,11 @@ HRESULT D3D11Engine::Application::Render() {
     // Put the model vertex and index buffers on the graphics pipeline to prepare them for drawing.
     m_model->Render(m_d3d11api->GetDeviceContext());
 
+    // Render the model using the texture shader.
+    RETURN_FAIL_IF_FAILED(m_texture_shader->Render(m_d3d11api->GetDeviceContext(), m_model->GetIndexCount(), worldMatrix, viewMatrix, projectionMatrix, m_model->GetTexture()))
+
     // Render the model using the color shader.
-    RETURN_FAIL_IF_FAILED(m_color_shader->Render(m_d3d11api->GetDeviceContext(), m_model->GetIndexCount(), worldMatrix, viewMatrix, projectionMatrix))
+    // RETURN_FAIL_IF_FAILED(m_color_shader->Render(m_d3d11api->GetDeviceContext(), m_model->GetIndexCount(), worldMatrix, viewMatrix, projectionMatrix))
 
     // Present the rendered scene to the screen.
     m_d3d11api->EndScene();
