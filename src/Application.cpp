@@ -24,6 +24,9 @@ HRESULT D3D11Engine::Application::Init() {
     m_camera = std::make_unique<Camera>();
     m_camera->SetPosition(0.0f, 0.0f, -5.0f);
 
+    m_input = std::make_unique<InputSystem>();
+    m_input->Init(m_window->getWindowHandle(), m_camera.get());
+
     std::string texture_filename("Assets/Textures/stone01.tga");
     m_model = std::make_unique<Model>();
     RETURN_FAIL_IF_FAILED(m_model->Initialize(m_d3d11api->GetDevice(),m_d3d11api->GetDeviceContext(), texture_filename))
@@ -40,8 +43,19 @@ HRESULT D3D11Engine::Application::Init() {
         return false;
     }
 
-    m_input = std::make_unique<InputSystem>();
-    m_input->Init(m_window->getWindowHandle(), m_camera.get());
+    // Create and initialize the light shader object.
+    m_light_shader = std::make_unique<LightShader>();
+    if(FAILED(m_light_shader->Initialize(m_d3d11api->GetDevice(), window_hwnd)))
+    {
+        MessageBoxW(window_hwnd, L"Could not initialize the light shader object.", L"Error", MB_OK);
+        return false;
+    }
+
+    // Create and initialize the light object.
+    m_light = std::make_unique<Light>();
+
+    m_light->SetDiffuseColor(1.0f, 1.0f, 1.0f, 1.0f);
+    m_light->SetDirection(0.0f, 0.0f, 1.0f);
 
     return S_OK;
 }
@@ -50,7 +64,9 @@ void D3D11Engine::Application::Update() {
     while (!m_window->ShouldWindowClose()) {
         m_input->Update();
 
-        Render();
+        if (FAILED(Frame())) {
+            m_window->SetWindowShouldClose(true);
+        }
     }
 }
 
@@ -60,7 +76,18 @@ HRESULT D3D11Engine::Application::Shutdown() {
     return S_OK;
 }
 
-HRESULT D3D11Engine::Application::Render() {
+HRESULT D3D11Engine::Application::Frame() {
+    static float rotation = 0.0f;
+
+    rotation -= 0.0174532925f * 0.1f;
+    if(rotation < 0.0f) rotation += 360.0f;
+
+    RETURN_FAIL_IF_FAILED(Render(rotation))
+
+    return S_OK;
+}
+
+HRESULT D3D11Engine::Application::Render(float rotation) {
     // Clear the buffers to begin the scene.
     m_d3d11api->BeginScene(0.0f, 0.0f, 0.0f, 1.0f);
 
@@ -73,11 +100,18 @@ HRESULT D3D11Engine::Application::Render() {
     m_camera->GetViewMatrix(viewMatrix);
     m_d3d11api->GetProjectionMatrix(projectionMatrix);
 
+    // Rotate the world matrix by the rotation value so that the triangle will spin.
+    worldMatrix = XMMatrixRotationY(rotation);
+
     // Put the model vertex and index buffers on the graphics pipeline to prepare them for drawing.
     m_model->Render(m_d3d11api->GetDeviceContext());
 
+    // Render the model using the light shader.
+    RETURN_FAIL_IF_FAILED(m_light_shader->Render(m_d3d11api->GetDeviceContext(), m_model->GetIndexCount(), worldMatrix, viewMatrix, projectionMatrix, m_model->GetTexture(),
+                               m_light->GetDirection(), m_light->GetDiffuseColor()))
+
     // Render the model using the texture shader.
-    RETURN_FAIL_IF_FAILED(m_texture_shader->Render(m_d3d11api->GetDeviceContext(), m_model->GetIndexCount(), worldMatrix, viewMatrix, projectionMatrix, m_model->GetTexture()))
+    // RETURN_FAIL_IF_FAILED(m_texture_shader->Render(m_d3d11api->GetDeviceContext(), m_model->GetIndexCount(), worldMatrix, viewMatrix, projectionMatrix, m_model->GetTexture()))
 
     // Render the model using the color shader.
     // RETURN_FAIL_IF_FAILED(m_color_shader->Render(m_d3d11api->GetDeviceContext(), m_model->GetIndexCount(), worldMatrix, viewMatrix, projectionMatrix))

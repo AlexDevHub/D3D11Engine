@@ -5,15 +5,17 @@
 #ifndef APPLICATION_H
 #define APPLICATION_H
 
-#include "pch.hpp"
+// #include "pch.hpp"
 #include "D3D11API.h"
 #include "InputSystem.h"
 #include "System.h"
 #include "Window.h"
 #include "Camera.h"
 #include "Model.h"
-#include "ColorShader.h"
-#include "TextureShader.h"
+#include "Shaders/ColorShader.h"
+#include "Shaders/TextureShader.h"
+#include "Shaders/LightShader.h"
+#include "Light.h"
 
 namespace D3D11Engine {
 class Application : public  System{
@@ -25,7 +27,8 @@ public:
     void Update() override;
     HRESULT Shutdown() override;
 
-    HRESULT Render();
+    HRESULT Frame();
+    HRESULT Render(float rotation);
 
     friend class InputSystem;
 
@@ -37,6 +40,8 @@ private:
     std::unique_ptr<Model> m_model;
     std::unique_ptr<ColorShader> m_color_shader;
     std::unique_ptr<TextureShader> m_texture_shader;
+    std::unique_ptr<LightShader> m_light_shader;
+    std::unique_ptr<Light> m_light;
 };
 } // namespace D3D11Engine
 

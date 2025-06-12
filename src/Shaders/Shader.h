@@ -16,7 +16,12 @@ protected:
         XMMATRIX view;
         XMMATRIX projection;
     };
-
+    struct LightBufferType
+    {
+        XMFLOAT4 diffuseColor;
+        XMFLOAT3 lightDirection;
+        float padding;  // Added extra padding so structure is a multiple of 16 for CreateBuffer function requirements.
+    };
 public:
     Shader() = default;
     Shader(const Shader&) = default;
@@ -35,6 +40,7 @@ protected:
     ComPtr<ID3D11InputLayout> m_layout;
     ComPtr<ID3D11Buffer> m_matrixBuffer;
     ComPtr<ID3D11SamplerState> m_sampleState;
+    ComPtr<ID3D11Buffer> m_lightBuffer;
 
 };
 

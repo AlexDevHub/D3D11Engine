@@ -57,7 +57,7 @@ HRESULT Shader::InitializeShader(ID3D11Device *device, HWND hwnd, std::wstring& 
 
     // Create the vertex input layout description.
     // This setup needs to match the VertexType stucture in the ModelClass and in the shader.
-    D3D11_INPUT_ELEMENT_DESC polygonLayout[3];
+    D3D11_INPUT_ELEMENT_DESC polygonLayout[4];
     polygonLayout[0].SemanticName = "POSITION";
     polygonLayout[0].SemanticIndex = 0;
     polygonLayout[0].Format = DXGI_FORMAT_R32G32B32_FLOAT;
@@ -81,6 +81,14 @@ HRESULT Shader::InitializeShader(ID3D11Device *device, HWND hwnd, std::wstring& 
     polygonLayout[2].AlignedByteOffset = D3D11_APPEND_ALIGNED_ELEMENT;
     polygonLayout[2].InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
     polygonLayout[2].InstanceDataStepRate = 0;
+
+    polygonLayout[3].SemanticName = "NORMAL";
+    polygonLayout[3].SemanticIndex = 0;
+    polygonLayout[3].Format = DXGI_FORMAT_R32G32B32_FLOAT;
+    polygonLayout[3].InputSlot = 0;
+    polygonLayout[3].AlignedByteOffset = D3D11_APPEND_ALIGNED_ELEMENT;
+    polygonLayout[3].InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
+    polygonLayout[3].InstanceDataStepRate = 0;
 
     // Get a count of the elements in the layout.
     unsigned int numElements = std::size(polygonLayout);
@@ -119,6 +127,19 @@ HRESULT Shader::InitializeShader(ID3D11Device *device, HWND hwnd, std::wstring& 
 
     // Create the texture sampler state.
     RETURN_FAIL_IF_FAILED(device->CreateSamplerState(&samplerDesc, &m_sampleState))
+
+    // Setup the description of the light dynamic constant buffer that is in the pixel shader.
+    // Note that ByteWidth always needs to be a multiple of 16 if using D3D11_BIND_CONSTANT_BUFFER or CreateBuffer will fail.
+    D3D11_BUFFER_DESC lightBufferDesc;
+    lightBufferDesc.Usage = D3D11_USAGE_DYNAMIC;
+    lightBufferDesc.ByteWidth = sizeof(LightBufferType);
+    lightBufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+    lightBufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+    lightBufferDesc.MiscFlags = 0;
+    lightBufferDesc.StructureByteStride = 0;
+
+    // Create the constant buffer pointer so we can access the vertex shader constant buffer from within this class.
+    RETURN_FAIL_IF_FAILED(device->CreateBuffer(&lightBufferDesc, nullptr, &m_lightBuffer))
 
     return S_OK;
 }
@@ -188,7 +209,7 @@ void Shader::RenderShader(ID3D11DeviceContext *device_context, int index_count) 
     device_context->PSSetShader(m_pixelShader.Get(), nullptr, 0);
 
     // Set the sampler state in the pixel shader.
-    device_context->PSSetSamplers(0, 1, &m_sampleState);
+    device_context->PSSetSamplers(0, 1, m_sampleState.GetAddressOf());
 
     // Render the triangle.
     device_context->DrawIndexed(index_count, 0, 0);

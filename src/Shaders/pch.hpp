@@ -1,9 +1,7 @@
 ﻿//
 // Created by xande on 6/9/2025.
 //
-
-#ifndef PCH_H
-#define PCH_H
+#pragma once
 
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
@@ -13,7 +11,7 @@
 #include <GLFW/glfw3.h>
 #include <GLFW/glfw3native.h>
 
-#include "Utils/Error.h"
+#include "../Utils/Error.h"
 
 #include <string>
 #include <memory>
@@ -28,5 +26,3 @@
 
 using namespace Microsoft::WRL;
 using namespace DirectX;
-
-#endif //PCH_H
